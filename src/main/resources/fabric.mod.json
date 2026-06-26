@@ -1,0 +1,29 @@
+{
+    "schemaVersion": 1,
+    "id": "zls",
+    "version": "${version}",
+    "name": "ZLS",
+    "description": "!!",
+    "authors": [
+        "Zephy"
+    ],
+    "contact": {
+        "sources": "https://github.com/ZLS-CT/ZLS-Java",
+        "issues": "https://github.com/ZLS-CT/ZLS-Java/issues"
+    },
+    "environment": "client",
+    "entrypoints": {
+        "main": [
+            "com.zephy.zls.Client"
+        ]
+    },
+    "mixins": [
+        "zls.mixins.json"
+    ],
+    "depends": {
+        "minecraft": "${minecraft_version}",
+        "fabricloader": ">=0.18.0",
+        "fabric-api": ">=$min_fabric_api_version",
+        "fabric-language-kotlin": ">=1.13.8+kotlin.2.3.0"
+    }
+}
