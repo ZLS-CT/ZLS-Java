@@ -3,7 +3,7 @@
     "id": "zls",
     "version": "${version}",
     "name": "ZLS",
-    "description": "!!",
+    "description": "Scanner for Hypixel SkyBlock valuable items. Includes Exotics, Crystal, Fairy, Glitched, Seymour, and much more.",
     "authors": [
         "Zephy"
     ],
