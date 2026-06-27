@@ -13,8 +13,8 @@
     },
     "environment": "client",
     "entrypoints": {
-        "main": [
-            "com.zephy.zls.Client"
+        "preLaunch": [
+            "com.zephy.zls.PreLaunch"
         ]
     },
     "mixins": [
