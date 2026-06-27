@@ -13,19 +13,16 @@ tasks {
         from(getByPath(":JavaModUpdater:jar").outputs)
 
         val version = project.version
-        val minecraftVersion = project.platform.mcVersionStr
         val minFabricApiVersion = project.findProperty("min-fabric-api")?.toString()
         val javaVersion = project.java.toolchain.languageVersion.get().asInt()
 
         inputs.property("version", version)
-        inputs.property("minecraft_version", minecraftVersion)
         inputs.property("min_fabric_api_version", minFabricApiVersion.toString())
         inputs.property("compatibilityLevel", javaVersion)
 
         filesMatching("fabric.mod.json") {
             expand(mapOf(
                 "version" to version,
-                "minecraft_version" to minecraftVersion,
                 "min_fabric_api_version" to minFabricApiVersion,
             ))
         }
