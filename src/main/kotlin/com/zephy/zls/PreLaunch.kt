@@ -1,5 +1,6 @@
 package com.zephy.zls
 
+import com.google.gson.Gson
 import net.fabricmc.loader.api.FabricLoader
 import net.fabricmc.loader.api.entrypoint.PreLaunchEntrypoint
 import org.slf4j.LoggerFactory
@@ -9,35 +10,45 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 private const val RESOURCE_FOLDER = "modules"
-private const val CONFIG_SUB_DIR = "ZJS"
+private const val ZJS_DIR = "ZJS"
 
 private val LOGGER = LoggerFactory.getLogger("zls")
-private val logPrefix = "[ZLS]"
-private fun logInfo(message: String) = LOGGER.info("$logPrefix $message")
+private val LOG_PREFIX = "[ZLS]"
+private fun logInfo(message: String) = LOGGER.info("$LOG_PREFIX $message")
 private fun logWarn(message: String, cause: Throwable? = null) =
-    if (cause != null) LOGGER.warn("$logPrefix $message", cause) else LOGGER.warn("$logPrefix $message")
+    if (cause != null) LOGGER.warn("$LOG_PREFIX $message", cause) else LOGGER.warn("$LOG_PREFIX $message")
+
+fun versionToInt(version: String): Int {
+    val parts = version.split(".").map { it.toInt() }
+    val major = parts[0]
+    val minor = parts.getOrElse(1) { 0 }
+    val patch = parts.getOrElse(2) { 0 }
+    return "$major${minor.toString().padStart(2, '0')}${patch.toString().padStart(2, '0')}".toInt()
+}
+
+private data class ModuleMetadata(val version: String = "")
 
 class PreLaunch : PreLaunchEntrypoint {
+    val RESOURCE_DIR: Path = FabricLoader.getInstance().configDir
+        .resolve(ZJS_DIR)
+        .resolve(RESOURCE_FOLDER)
+
     override fun onPreLaunch() {
         logInfo("Pre-Launch started.")
         copyDefaultConfigs()
     }
 
     private fun copyDefaultConfigs() {
-        val configDir = FabricLoader.getInstance().configDir
-            .resolve(CONFIG_SUB_DIR)
-            .resolve(RESOURCE_FOLDER)
-
         val resourceUri = javaClass.getResource("/$RESOURCE_FOLDER")?.toURI()
             ?: return logWarn("Resource folder '/$RESOURCE_FOLDER' not found, skipping.")
 
         runCatching {
             if (resourceUri.scheme == "jar") {
                 FileSystems.newFileSystem(resourceUri, emptyMap<String, Any>()).use { fs ->
-                    copyResources(fs.getPath("/$RESOURCE_FOLDER"), configDir)
+                    copyAllModules(fs.getPath("/$RESOURCE_FOLDER"))
                 }
             } else {
-                copyResources(Path.of(resourceUri), configDir)
+                copyAllModules(Path.of(resourceUri))
             }
         }.onFailure { e ->
             if (e is IOException) logWarn("Failed to copy default configs.", e)
@@ -47,23 +58,48 @@ class PreLaunch : PreLaunchEntrypoint {
         }
     }
 
-    private fun copyResources(resourcePath: Path, configDir: Path): Int {
-        val copiedCount = Files.walk(resourcePath).use { stream ->
+    private fun copyAllModules(allModulesPath: Path): Int {
+        return Files.list(allModulesPath).use { stream ->
+            stream
+                .filter(Files::isDirectory)
+                .mapToInt { modulePath ->
+                    copyResources(modulePath, RESOURCE_DIR.resolve(modulePath.fileName.toString()))
+                }
+                .sum()
+        }
+    }
+
+    private fun copyResources(modulePath: Path, destDir: Path): Int {
+        val folderName = modulePath.fileName.toString()
+        val existingVersionInt = getZJSModuleVersion(destDir)
+        val moduleVersionInt = getZJSModuleVersion(modulePath)
+
+        val copiedCount = Files.walk(modulePath).use { stream ->
             stream
                 .filter(Files::isRegularFile)
                 .mapToInt { source ->
-                    val destination = configDir.resolve(resourcePath.relativize(source).toString())
-                    if (Files.notExists(destination)) {
+                    val destination = destDir.resolve(modulePath.relativize(source).toString())
+                    if (Files.notExists(destination) || moduleVersionInt > existingVersionInt) {
                         Files.createDirectories(destination.parent)
-                        Files.copy(source, destination)
+                        Files.copy(source, destination, java.nio.file.StandardCopyOption.REPLACE_EXISTING)
                         1
                     } else 0
                 }
                 .sum()
         }
 
-        if (copiedCount > 0) logInfo("Install complete. Copied ${copiedCount} file(s) to ${configDir}.")
+        if (copiedCount > 0) logInfo("[$folderName] Install complete. Copied $copiedCount file(s) to $destDir.")
         return copiedCount
+    }
+
+    private fun getZJSModuleVersion(modulePath: Path): Int {
+        return try {
+            val metaFile = modulePath.resolve("metadata.json")
+            val version = Gson().fromJson(Files.readString(metaFile), ModuleMetadata::class.java).version
+            if (version.isEmpty()) 0 else versionToInt(version)
+        } catch (_: Exception) {
+            0
+        }
     }
 
     private fun reloadZJSModules() {
