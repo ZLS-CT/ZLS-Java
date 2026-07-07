@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "com.zephy.zls"
-version = "4.3.0"
+version = "0.6.0"
 
 tasks {
     processResources {
@@ -50,7 +50,7 @@ afterEvaluate {
             include("*.jar")
             exclude { it.name.contains(" 1.2") && it.name.contains("-all") }
             rename {
-                "${rootProject.name}-${version}+${project.platform.mcVersionStr}.jar"
+                "${rootProject.name}-${version}.jar"
             }
         }
         into(outputDir)
