@@ -45,3 +45,4 @@ bin/
 .DS_Store
 /.idea
 /jars
+src/main/resources/modules/ZLS/index.js

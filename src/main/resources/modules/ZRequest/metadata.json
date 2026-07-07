@@ -1,0 +1,6 @@
+{
+    "name": "ZRequest",
+    "description": "Utility module for requests (ripped from tska). Supports 1.8.9, 1.21.x, and 26.x.",
+    "author": "DocilElm",
+    "version": "1.0.2"
+}
