@@ -1,0 +1,16 @@
+{
+    "name": "ZLS",
+    "description": "Lobby scanner for Exotics, OG Fairy, Fairy, Crystal, Fairy, Skins, Rare Items, and more.",
+    "author": "Zephy (Nvidia2080Ti)",
+    "requires": [
+        "MQTT",
+        "ZCore",
+        "ZConfig",
+        "ZKeys",
+        "ZLore",
+        "ZRenderLib",
+        "ZUrsaProxy"
+    ],
+    "version": "4.3.0",
+    "entry": "loader.js"
+}
