@@ -73,23 +73,27 @@ class PreLaunch : PreLaunchEntrypoint {
         val folderName = modulePath.fileName.toString()
         val existingVersionInt = getZJSModuleVersion(destDir)
         val moduleVersionInt = getZJSModuleVersion(modulePath)
+        val copiedFiles = mutableListOf<String>()
 
-        val copiedCount = Files.walk(modulePath).use { stream ->
+        Files.walk(modulePath).use { stream ->
             stream
                 .filter(Files::isRegularFile)
-                .mapToInt { source ->
-                    val destination = destDir.resolve(modulePath.relativize(source).toString())
-                    if (Files.notExists(destination) || moduleVersionInt > existingVersionInt) {
+                .forEach { source ->
+                    val relative = modulePath.relativize(source).toString()
+                    val destination = destDir.resolve(relative)
+                    val existed = Files.exists(destination)
+                    if (!existed || moduleVersionInt > existingVersionInt) {
                         Files.createDirectories(destination.parent)
                         Files.copy(source, destination, java.nio.file.StandardCopyOption.REPLACE_EXISTING)
-                        1
-                    } else 0
+                        copiedFiles += relative
+                    }
                 }
-                .sum()
         }
 
-        if (copiedCount > 0) logInfo("[$folderName] Install complete. Copied $copiedCount file(s) to $destDir.")
-        return copiedCount
+        if (copiedFiles.isNotEmpty()) {
+            logInfo("[$folderName] Install complete. Copied ${copiedFiles.size} file(s) to $destDir: ${copiedFiles.joinToString(prefix = "\n  - ", separator = "\n  - ")}")
+        }
+        return copiedFiles.size
     }
 
     private fun getZJSModuleVersion(modulePath: Path): Int {

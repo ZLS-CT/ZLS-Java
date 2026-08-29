@@ -24,13 +24,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-//#if MC<=12111
-//$$import net.minecraft.client.gui.GuiGraphics;
-//$$@Mixin(GuiGraphics.class)
-//#else
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 @Mixin(GuiGraphicsExtractor.class)
-//#endif
 abstract class DrawContextMixin {
     @Shadow
     public abstract void fill(int i, int j, int k, int l, int m);
@@ -40,11 +35,7 @@ abstract class DrawContextMixin {
     public abstract int guiHeight();
 
     @Inject(
-        //#if MC<=12111
-        //$$method = "renderItem(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/level/Level;Lnet/minecraft/world/item/ItemStack;III)V",
-        //#else
         method = "item(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/level/Level;Lnet/minecraft/world/item/ItemStack;III)V",
-        //#endif
         at = @At("HEAD")
     )
     public void drawItem(
@@ -62,11 +53,7 @@ abstract class DrawContextMixin {
         int screenY = y;
         DrawSingleItemStackEvent.drawSingleItemStack(
             new ItemRenderData(
-                //#if MC<=12111
-                //$$(GuiGraphics)(Object)this,
-                //#else
                 (GuiGraphicsExtractor)(Object)this,
-                //#endif
                 itemStack,
                 screenX,
                 screenY,
@@ -78,18 +65,10 @@ abstract class DrawContextMixin {
     private static final Pattern HEX_PATTERN = Pattern.compile("#([0-9a-fA-F]{6})");
 
     @Inject(
-        //#if MC<=12111
-        //$$method = "renderTooltip",
-        //#else
         method = "tooltip",
-        //#endif
         at = @At(
             value = "INVOKE",
-            //#if MC<=12111
-            //$$target = "Lnet/minecraft/client/gui/screens/inventory/tooltip/TooltipRenderUtil;renderTooltipBackground(Lnet/minecraft/client/gui/GuiGraphics;IIIILnet/minecraft/resources/Identifier;)V",
-            //#else
             target = "Lnet/minecraft/client/gui/screens/inventory/tooltip/TooltipRenderUtil;extractTooltipBackground(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIIILnet/minecraft/resources/Identifier;)V",
-            //#endif
             shift = At.Shift.AFTER
         ),
         locals = LocalCapture.CAPTURE_FAILHARD
