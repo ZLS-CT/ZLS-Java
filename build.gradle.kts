@@ -10,8 +10,6 @@ version = "0.6.0"
 
 tasks {
     processResources {
-        from(getByPath(":JavaModUpdater:jar").outputs)
-
         val version = project.version
         val minFabricApiVersion = project.findProperty("min-fabric-api")?.toString()
         val javaVersion = project.java.toolchain.languageVersion.get().asInt()
