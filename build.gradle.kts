@@ -11,24 +11,17 @@ version = "0.6.0"
 tasks {
     processResources {
         val version = project.version
-        val minFabricApiVersion = project.findProperty("min-fabric-api")?.toString()
-        val javaVersion = project.java.toolchain.languageVersion.get().asInt()
-
         inputs.property("version", version)
-        inputs.property("min_fabric_api_version", minFabricApiVersion.toString())
-        inputs.property("compatibilityLevel", javaVersion)
-
         filesMatching("fabric.mod.json") {
             expand(mapOf(
                 "version" to version,
-                "min_fabric_api_version" to minFabricApiVersion,
             ))
         }
 
+        val javaVersion = project.java.toolchain.languageVersion.get().asInt()
+        inputs.property("compatibilityLevel", javaVersion)
         filesMatching("zls.mixins.json") {
-            filter { line ->
-                line.replace("JAVA_\$compatibilityLevel", "JAVA_$javaVersion")
-            }
+            filter { line -> line.replace("\$compatibilityLevel", "JAVA_$javaVersion") }
         }
     }
 }
