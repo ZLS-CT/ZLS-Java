@@ -273,13 +273,13 @@ object TooltipScreenshot {
         //$$val commandEncoder = RenderSystem.getDevice().createCommandEncoder()
         //#endif
         RenderSystem.getDevice().createCommandEncoder().copyTextureToBuffer(sourceTexture, buffer, 0L, {
-            //#if MC<26.2
-            //$$commandEncoder.mapBuffer(buffer, true, false)
-            //#else
-            buffer.map(true, false)
-            //#endif
-                .use { read ->
-                    buffer.use { buffer ->
+            buffer.use { buffer ->
+                //#if MC<26.2
+                //$$commandEncoder.mapBuffer(buffer, true, false)
+                //#else
+                buffer.map(true, false)
+                //#endif
+                    .use { read ->
                         val image = NativeImage(width, height, false)
                         for (y in 0 until height) {
                             val rowOffset = y * width * pixelSize
@@ -291,7 +291,7 @@ object TooltipScreenshot {
                         }
                         callback(image)
                     }
-                }
+            }
         }, 0)
     }
 
@@ -320,7 +320,6 @@ object TooltipScreenshot {
         ImageIO.write(buffered, "png", outputStream)
         return outputStream.toByteArray()
     }
-
 
     private fun registerPngNativeFlavor() {
         if (pngNativeFlavorRegistered) return
