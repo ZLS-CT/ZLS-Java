@@ -4,9 +4,12 @@
     "package": "com.zephy.zls.mixins",
     "compatibilityLevel": "$compatibilityLevel",
     "mixins": [
+        "AbstractContainerScreenAccessor",
         "ChatHudMixin",
+        "ClientTextTooltipAccessor",
         "DrawContextMixin",
-        "ClientTextTooltipAccessor"
+        "GameRendererMixin",
+        "GuiRendererMixin"
     ],
     "injectors": {
         "defaultRequire": 1
