@@ -64,6 +64,11 @@ object TooltipScreenshot {
 
     @JvmField
     var captureTarget: RenderTarget? = null
+    @JvmField
+    var lastTooltipItem: ItemStack = ItemStack.EMPTY
+    @JvmField
+    var pendingTooltipItem: ItemStack = ItemStack.EMPTY
+
     private var offscreenBacking: TextureTarget? = null
     private var drawFont: Font? = null
     private var drawComponents: List<ClientTooltipComponent>? = null
@@ -90,13 +95,16 @@ object TooltipScreenshot {
 
     fun getHoveredItemStack(): ItemStack? {
         //#if MC<26.2
-        //$$val screen = Minecraft.getInstance().screen as? AbstractContainerScreen<*> ?: return null
+        //$$val screen = Minecraft.getInstance().screen
         //#else
-        val screen = Minecraft.getInstance().gui.screen() as? AbstractContainerScreen<*> ?: return null
+        val screen = Minecraft.getInstance().gui.screen()
         //#endif
-        val slot = (screen as AbstractContainerScreenAccessor).getHoveredSlot() ?: return null
-        val stack = slot.item
-        return stack.takeIf { !it.isEmpty }
+        if (screen is AbstractContainerScreen<*>) {
+            val slot = (screen as AbstractContainerScreenAccessor).hoveredSlot
+            val slotStack = slot?.item?.takeIf { !it.isEmpty }
+            if (slotStack != null) return slotStack
+        }
+        return lastTooltipItem.takeIf { !it.isEmpty }
     }
 
     private fun extract(graphics: GuiGraphicsExtractor, deltaTracker: DeltaTracker) {

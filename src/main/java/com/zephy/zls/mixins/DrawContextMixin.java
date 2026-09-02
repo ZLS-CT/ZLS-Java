@@ -3,9 +3,12 @@ package com.zephy.zls.mixins;
 import com.zephy.zls.DarkHexColorReadabilityOptions;
 import com.zephy.zls.DrawSingleItemStackEvent;
 import com.zephy.zls.ItemRenderData;
+import com.zephy.zls.TooltipScreenshot;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipPositioner;
+import net.minecraft.client.renderer.state.gui.GuiRenderState;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.entity.LivingEntity;
@@ -144,5 +147,22 @@ abstract class DrawContextMixin {
 
         double luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255.0;
         return luminance < DarkHexColorReadabilityOptions.GetLuminanceThreshold();
+    }
+
+    @Inject(
+        method = "<init>(Lnet/minecraft/client/Minecraft;Lnet/minecraft/client/renderer/state/gui/GuiRenderState;II)V",
+        at = @At("RETURN")
+    )
+    private void swapTooltipItemFrame(Minecraft minecraft, GuiRenderState guiRenderState, int mouseX, int mouseY, CallbackInfo ci) {
+        TooltipScreenshot.lastTooltipItem = TooltipScreenshot.pendingTooltipItem;
+        TooltipScreenshot.pendingTooltipItem = ItemStack.EMPTY;
+    }
+
+    @Inject(
+        method = "setTooltipForNextFrame(Lnet/minecraft/client/gui/Font;Lnet/minecraft/world/item/ItemStack;II)V",
+        at = @At("HEAD")
+    )
+    private void captureTooltipItem(Font font, ItemStack itemStack, int x, int y, CallbackInfo ci) {
+        TooltipScreenshot.pendingTooltipItem = itemStack;
     }
 }
