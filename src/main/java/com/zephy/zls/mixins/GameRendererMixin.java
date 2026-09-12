@@ -28,7 +28,11 @@ public abstract class GameRendererMixin {
     //#endif
 
     @Inject(
-        method = "render(Lnet/minecraft/client/DeltaTracker;Z)V",
+        //#if MC<26.3
+        //$$method = "render(Lnet/minecraft/client/DeltaTracker;Z)V",
+        //#else
+        method = "render()V",
+        //#endif
         at = @At(
             value = "INVOKE",
             //#if MC<26.2
@@ -39,7 +43,12 @@ public abstract class GameRendererMixin {
             shift = At.Shift.AFTER
         )
     )
-    private void afterGuiRender(DeltaTracker deltaTracker, boolean advanceGameTime, CallbackInfo ci) {
+    private void afterGuiRender(
+        //#if MC<26.3
+        //$$DeltaTracker deltaTracker, boolean advanceGameTime,
+        //#endif
+        CallbackInfo ci
+    ) {
         TooltipScreenshot.INSTANCE.maybeCaptureTooltipOffscreen(this.guiRenderer);
     }
 }

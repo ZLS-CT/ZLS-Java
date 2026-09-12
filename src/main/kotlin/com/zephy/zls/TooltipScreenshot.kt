@@ -34,7 +34,11 @@ import net.minecraft.util.Util
 //$$import com.zephy.zls.mixins.GameRendererMixin
 //$$import net.minecraft.client.renderer.fog.FogRenderer
 //#else
-import com.mojang.blaze3d.GpuFormat
+//#if MC<26.3
+//$$import com.mojang.blaze3d.GpuFormat
+//#else
+import com.mojang.renderpearl.api.GpuFormat
+//#endif
 import org.joml.Vector4f
 //#endif
 
@@ -157,8 +161,10 @@ object TooltipScreenshot {
         }
         //#if MC<26.2
         //$$return TextureTarget("zls tooltip capture", w, h, true).also { offscreenBacking = it }
+        //#elseif MC<26.3
+        //$$return TextureTarget("zls tooltip capture", w, h, true, GpuFormat.RGBA8_UNORM).also { offscreenBacking = it }
         //#else
-        return TextureTarget("zls tooltip capture", w, h, true, GpuFormat.RGBA8_UNORM).also { offscreenBacking = it }
+        return TextureTarget("zls tooltip capture", w, h, GpuFormat.RGBA8_UNORM, GpuFormat.D32_FLOAT).also { offscreenBacking = it }
         //#endif
     }
 
@@ -198,13 +204,21 @@ object TooltipScreenshot {
         val colorTexture = target.colorTextureView!!.texture()
         val depthTexture = target.depthTextureView?.texture()
         val encoder = RenderSystem.getDevice().createCommandEncoder()
-        if (target.useDepth && depthTexture != null) {
+        //#if MC<26.3
+        //$$if (target.useDepth && depthTexture != null) {
+        //#else
+        if (target.hasDepth() && depthTexture != null) {
+        //#endif
             encoder.clearColorAndDepthTextures(colorTexture, CLEAR_VALUE, depthTexture, 1.0)
         } else {
             encoder.clearColorTexture(colorTexture, CLEAR_VALUE)
         }
 
-        extractor.tooltip(font, components, padding, padding, OffscreenTooltipPositioner, drawTooltipStyle)
+        extractor.tooltip(font, components, padding, padding, OffscreenTooltipPositioner, drawTooltipStyle,
+            //#if MC>=26.3
+            true
+            //#endif
+        )
         captureTarget = target
         try {
             //#if MC<26.2

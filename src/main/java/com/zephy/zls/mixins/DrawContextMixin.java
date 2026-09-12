@@ -83,6 +83,9 @@ abstract class DrawContextMixin {
         int y,
         ClientTooltipPositioner clientTooltipPositioner,
         Identifier identifier,
+        //#if MC>=26.3
+        boolean extraSpaceAfterFirstLine,
+        //#endif
         CallbackInfo ci
     ) {
         if (!DarkHexColorReadabilityOptions.GetIsEnabled()) return;
