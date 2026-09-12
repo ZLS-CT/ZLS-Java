@@ -139,9 +139,10 @@ object TooltipScreenshot {
             tempHeight += line.getHeight(font)
         }
 
-        val guiScale = mc.window.guiScale
-        val pw = ((textWidth + padding * 2) * guiScale).coerceIn(1, MAX_TEXTURE_DIM)
-        val ph = ((tempHeight + padding * 2) * guiScale).coerceIn(1, MAX_TEXTURE_DIM)
+        val guiScale = mc.window.guiScale.toDouble()
+        val styleSlack = if (drawTooltipStyle != null) 24 else 0
+        val pw = (kotlin.math.ceil((textWidth + padding * 2) * guiScale).toInt() + 8 + styleSlack).coerceIn(1, MAX_TEXTURE_DIM)
+        val ph = (kotlin.math.ceil((tempHeight + padding * 2) * guiScale).toInt() + 8 + styleSlack).coerceIn(1, MAX_TEXTURE_DIM)
 
         captureBounds = intArrayOf(0, 0, pw, ph)
         drawFont = font
@@ -249,7 +250,16 @@ object TooltipScreenshot {
                 val cropped = NativeImage(w, h, false)
                 cropped.use { cropped ->
                     screenshot.resizeSubRectTo(x, y, w, h, cropped)
-                    val pngBytes = nativeImageToPngBytes(cropped)
+                    val imageBounds = findImageBounds(cropped)
+                    val finalImage = if (imageBounds != null) {
+                        NativeImage(imageBounds[2], imageBounds[3], false).also { trimmed ->
+                            cropped.copyRect(trimmed, imageBounds[0], imageBounds[1], 0, 0, imageBounds[2], imageBounds[3], false, false)
+                        }
+                    } else cropped
+                    val pngBytes = nativeImageToPngBytes(finalImage)
+                    if (finalImage != cropped) {
+                        finalImage.close()
+                    }
                     Util.ioPool().execute { setClipboard(pngBytes) }
                 }
             } catch (e: Exception) {
@@ -258,6 +268,25 @@ object TooltipScreenshot {
                 screenshot.close()
             }
         }
+    }
+
+    private fun findImageBounds(image: NativeImage): IntArray? {
+        var minX = image.width
+        var minY = image.height
+        var maxX = -1
+        var maxY = -1
+        for (py in 0 until image.height) {
+            for (px in 0 until image.width) {
+                val alpha = (image.getPixel(px, py) ushr 24) and 0xFF
+                if (alpha != 0) {
+                    if (px < minX) minX = px
+                    if (py < minY) minY = py
+                    if (px > maxX) maxX = px
+                    if (py > maxY) maxY = py
+                }
+            }
+        }
+        return if (maxX < minX || maxY < minY) null else intArrayOf(minX, minY, maxX - minX + 1, maxY - minY + 1)
     }
 
     private fun takeScreenshotPreservingAlpha(target: RenderTarget, callback: (NativeImage) -> Unit) {
